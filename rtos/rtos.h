@@ -7,7 +7,9 @@
 #include <stdio.h>
 #include <string.h>
 #include "../threads_linked_list/threads_linked_list.h"
+#ifdef POSIX_TIMER
 #include "../posix_timer/ee_linux_system_timer.h"
+#endif
 #ifndef __RTOS__
 #define __RTOS__
 #define NUMBER_OF_THREADS 20

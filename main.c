@@ -4,14 +4,14 @@ extern pthread_t threads[NUMBER_OF_THREADS];
 extern pthread_t main_thread;
 int main()
 {
+    printf("Demo is running\n");
     // set_callback(increment_tick);
     main_thread = pthread_self();
-    printf("m\n");
     pthread_setschedprio(main_thread,3);
     init_signals();
     printf("signals init done\n");
     init_threads();
-    printf("signals done\n");
+    printf("Threads Init done\n");
     // osEE_linux_system_timer_init();
     for(int i = 0;i<NUMBER_OF_THREADS&& threads[i]!= -1;i++){
         printf("Thread[%d] stopped\n",i);
@@ -20,13 +20,18 @@ int main()
     printf("\n**************************");
     printf("\nALL THREADS STOPPED\n");
     printf("\n**************************\n");
-    int waiting;
     for(int i = 0;i<NUMBER_OF_THREADS&& threads[i]!= -1;i++)
     {
         resume_thread(threads[i]);
         printf("Thread[%d] resumed\n",i);
-        pthread_join(threads[i],&waiting);
-        printf("Thread[%d] stopped and main thread works\n",i);
+        stop_main();
+        printf("Main thread works\n");
+        stop_thread(threads[i]);
+        printf("Thread[%d] stopped \n",i);
     }
+
+    printf("\n**************************");
+    printf("\nDEMO FINISHED\n");
+    printf("\n**************************\n");
     return 0;
 }

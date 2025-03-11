@@ -22,8 +22,8 @@ pthread_t main_thread;
  * by a thread
  */
 static pthread_mutex_t kernel_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-
+static pthread_mutex_t main_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t main_cond = PTHREAD_COND_INITIALIZER;
 
 
 static __uint8_t signal_is_handled = SIGNAL_UNHANDLED;
@@ -33,7 +33,6 @@ static void stop_thread_handler(int sig);
 static void resume_thread_handler(int sig);
 static void pthread_body(void *arg);
 static void increment_tick(int sig);
-
 void stop_thread_handler(int sig)
 {
     sigset_t signal_mask;
@@ -53,7 +52,8 @@ void stop_thread_handler(int sig)
  */
 void resume_thread_handler(int sig)
 {
-    // printf("thread %lld is resumed\n",pthread_self());
+    if(pthread_equal(pthread_self(),main_thread))
+        printf("Main Thread SIGUSR2 Handler is called\n");
     return;
 }
 
@@ -157,13 +157,14 @@ int resume_thread(pthread_t thread_to_resume)
 void pthread_body(void *arg)
 {
     sleep(1);
-    int pthread_number = (int)arg;
-    for (volatile int i = 1; i < 100; i++)
+    volatile int dummy = 0;
+    for ( int i = 1; i < 100; i++)
     {
-        
+        dummy++;
     }
-    printf("Thread[%d] finished\n");
-    resume_thread(main_thread);
+    printf("Thread finished\n");
+    resume_main();
+    printf("Main resumed and task exits\n");
     pthread_exit((void*)10);
 }
 
@@ -203,7 +204,7 @@ void init_threads()
     pthread_attr_setdetachstate(&attr,PTHREAD_CREATE_JOINABLE);
     struct sched_param param;
     param.sched_priority = 0;
-    int policy = SCHED_RR;
+    int policy = SCHED_FIFO;
     pthread_attr_setschedparam(&attr,&param);
     pthread_attr_setschedpolicy(&attr,&policy);
     for (int i = 0; i < NUMBER_OF_THREADS; i++)
@@ -226,4 +227,13 @@ void increment_tick(int sig)
 {
     // tick++;
     return;
+}
+
+void stop_main(){
+    pthread_mutex_lock(&main_mutex);
+    pthread_cond_wait(&main_cond,&main_mutex);
+    pthread_mutex_unlock(&main_mutex);
+}
+void resume_main(){
+   pthread_cond_signal(&main_cond);
 }

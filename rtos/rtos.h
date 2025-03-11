@@ -32,5 +32,9 @@ void init_signals();
 
 /* Initialize the worker threads */
 void init_threads();
+/* stop main thread */
+void stop_main();
+/* resume main thread */
+void resume_main();
 
 #endif

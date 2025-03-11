@@ -20,15 +20,13 @@ int main()
     printf("\n**************************");
     printf("\nALL THREADS STOPPED\n");
     printf("\n**************************\n");
-
+    int waiting;
     for(int i = 0;i<NUMBER_OF_THREADS&& threads[i]!= -1;i++)
     {
         resume_thread(threads[i]);
         printf("Thread[%d] resumed\n",i);
-        stop_thread(main_thread);
-        stop_thread(threads[i]);
-        printf("Thread[%d] stopped\n",i);
+        pthread_join(threads[i],&waiting);
+        printf("Thread[%d] stopped and main thread works\n",i);
     }
-    sleep(1);
     return 0;
 }

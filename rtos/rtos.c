@@ -24,12 +24,6 @@ pthread_t main_thread;
 static pthread_mutex_t kernel_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
-/*
- * Condition Variable and mutex to sync the main
- */
-static pthread_cond_t main_cond = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t main_mutex = PTHREAD_MUTEX_INITIALIZER;
-
 
 
 static __uint8_t signal_is_handled = SIGNAL_UNHANDLED;
@@ -46,7 +40,7 @@ void stop_thread_handler(int sig)
     sigfillset(&signal_mask);
     sigdelset(&signal_mask, SIGUSR2);
     sigdelset(&signal_mask, SIGALRM);
-    printf("signal %lld is paused\n",pthread_self());
+    // printf("thread %lld is paused\n",pthread_self());
     signal_is_handled = SIGNAL_HANDLED;
     sigsuspend(&signal_mask);
     return;
@@ -59,6 +53,7 @@ void stop_thread_handler(int sig)
  */
 void resume_thread_handler(int sig)
 {
+    // printf("thread %lld is resumed\n",pthread_self());
     return;
 }
 
@@ -109,15 +104,7 @@ int stop_thread(pthread_t thread_to_stop)
             return ERROR;
         }
     }
-    else{
-        /* Try to unlock the kernel mutex*/
-        if (pthread_mutex_unlock(&kernel_mutex) != 0)
-        {
-            printf("Can not unlock the kernel mutex after stopping thread\n");
-            return ERROR;
-        }
-        pthread_cond_wait(&main_cond, &main_mutex); // Main thread waits here
-    }
+
     return !ERROR;
 }
 
@@ -158,10 +145,6 @@ int resume_thread(pthread_t thread_to_resume)
         /* remove it from the stopped list */
         delete_node(&stopped_threads, thread_to_resume);
     }
-    else{
-        pthread_cond_signal(&main_cond);
-        pthread_mutex_unlock(&main_mutex); // Unlock mutex after wait is over
-    }
     if (pthread_mutex_unlock(&kernel_mutex) != 0)
     {
         printf("Can not unlock the kernel mutex after resuming thread\n");
@@ -175,13 +158,13 @@ void pthread_body(void *arg)
 {
     sleep(1);
     int pthread_number = (int)arg;
-    for (int i = 1; i < 100; i++)
+    for (volatile int i = 1; i < 100; i++)
     {
-        printf("Thread[%d] is running in iteration[%d]\n", pthread_number, i);
+        
     }
     printf("Thread[%d] finished\n");
-    sleep(1);
     resume_thread(main_thread);
+    pthread_exit((void*)10);
 }
 
 /* Initialize the signals */
@@ -217,7 +200,7 @@ void init_threads()
     init_list(&stopped_threads);
     pthread_attr_t attr;
     pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr,PTHREAD_CREATE_DETACHED);
+    pthread_attr_setdetachstate(&attr,PTHREAD_CREATE_JOINABLE);
     struct sched_param param;
     param.sched_priority = 0;
     int policy = SCHED_RR;

@@ -5,14 +5,18 @@ extern pthread_t main_thread;
 int main()
 {
     printf("Demo is running\n");
-    // set_callback(increment_tick);
+    #ifdef POSIX_TIMER
+      set_callback(increment_tick);
+    #endif
     main_thread = pthread_self();
     pthread_setschedprio(main_thread,3);
     init_signals();
     printf("signals init done\n");
     init_threads();
     printf("Threads Init done\n");
-    // osEE_linux_system_timer_init();
+    #ifdef POSIX_TIMER
+     osEE_linux_system_timer_init();
+    #endif
     for(int i = 0;i<NUMBER_OF_THREADS&& threads[i]!= -1;i++){
         printf("Thread[%d] stopped\n",i);
         stop_thread(threads[i]);

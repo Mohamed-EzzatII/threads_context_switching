@@ -222,12 +222,13 @@ void init_threads()
 
     /* add all the threads in the running state initially */
 }
-
+#ifdef POSIX_TIMER
 void increment_tick(int sig)
 {
     // tick++;
     return;
 }
+#endif
 
 void stop_main(){
     pthread_mutex_lock(&main_mutex);
